@@ -1,0 +1,3 @@
+(generar (n))
+
+(explora (n))
