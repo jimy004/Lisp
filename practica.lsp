@@ -26,10 +26,10 @@
 
 ;; algorisme DFS per a generar laberint (sense pila)
 (defun dfs (l f c) ;; l:matriu f:fila casella inici c:columna casella inici
-    (print l)
-    ;; es canvia el valor de de la casella entrada
-    (setq l1 (canvia f l (canvia c (car l) 'entrada)))
     ;; crear cami
+    (crea-cami (set-valor l f c 'entrada) f c)
+    ;; s'obté una casella 'cami aleatori
+
 )
 
 ;; crea un cami per al laberint
@@ -37,13 +37,32 @@
     ;; es tria aleatòriament una casella adjacent a l'actual
     (setq rs (make-random-state t))
     (setq eleccio (+ 1 (random 4 rs)))
-    (cond ((= eleccio 1) (+ f 1))
-        ((= eleccio 2) (- f 1))
-        ((= eleccio 3) (+ c 1))
-        ((= eleccio 4) (- c 1)))
-    ;; es canvia el valor si es compleixen els requisits
-    (cond (and (= 'paret ()) (mirar caselles veines)) (crea-cami l))
-    
+    (cond 
+    ((= eleccio 1) ;; casella adjacent superior
+    (cond (and (= 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c)
+    )
+    )
+    ((= eleccio 2) ;; casella adjacent inferior
+    (cond (and (= 'paret (get-valor l (- f 1) c)) (mirar-veins l (- f 1) c)) (crea-cami (set-valor l (- f 1) c 'cami) (- f 1) c)
+    )
+    )
+    ((= eleccio 3) ;; casella adjacent posterior
+    (cond (and (= 'paret (get-valor l f (+ c 1))) (mirar-veins l f (+ c 1))) (crea-cami (set-valor l f (+ c 1) 'cami) f (+ c 1))
+    )
+    )
+    ((= eleccio 4) ;; casella adjacent anterior
+    (cond (and (= 'paret (get-valor l f (- c 1)) (mirar-veins l f (- c 1))) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)))
+    )
+    )
+    )
+
+
+)
+
+;; torna t si les caselles adjacent no son 'cami
+(defun mirar-veins (l f c)
+    (cond ((= (or 'paret 'entrada 'sortida) (get-valor l (+ f 1) c) (get-valor l (- f 1) c) (get-valor l f (+ c 1)) (get-valor l f (- c 1))) t) //!! CAMBIAR OR 
+    (t nil))
 )
 
 ;; tornar l'enesim valor d'una llista de dos dimensions
@@ -66,15 +85,6 @@
     (t (cons (car l) (set-valor-fila (cdr l) (- c 1) x)))
     )
 )
-
-
-;;canvia l'enèsim element d'una llista per l'element donat
-(defun canvia (on l per)
-    (cond ((= on 1) (cons per (cdr l)))
-        (t (cons (car l) 
-            (canvia (- on 1)
-                (cdr l)
-                per)))))
 
 ;; FUNCIÓ EXPLORACIÓ INTERACTIVA DE LABERINTS
 (defun explora (nom))
