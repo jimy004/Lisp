@@ -5,9 +5,9 @@
     (setq fila (+ 2 (random n rs))) ;; + 2 per evitar que estigui a la primera fila
     (setq columna (+ 2 (random m rs)))
     ;; es comprova que no estigui a una vorera (amb els condicionals)
-    (escriure (dfs (inicialitzar-matriu n m) 
+    (dfs (inicialitzar-matriu n m) 
         (cond ((= (+ n 1) fila) (- fila 2)) ((= n fila) (- fila 1)) (t fila)) 
-        (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna))))
+        (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna)))
 )
 
 ;; crear una matriu de les dimensions n*m plena de parets
@@ -34,10 +34,9 @@
 
 ;; crea un cami per al laberint
 (defun crea-cami (l f c)
-    (print l)
     ;; es tria aleatòriament una casella adjacent a l'actual
     (setq rs (make-random-state t))
-    (setq eleccio (+ 1 (random (llarg (opcions l f c)) rs)))
+    (setq eleccio (agafa-opcio (opcions l f c) (random (llarg (opcions l f c)) rs)))
     (cond 
     ((= eleccio 1) ;; casella adjacent inferior
     (cond ((and (eq 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c eleccio)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c))
@@ -57,7 +56,6 @@
     )
     )
 )
-
 (defun opcions-sortida (l) 
     (setq rs (make-random-state t))
     (setq fila (+ 2 (random (llarg l) rs))) ;; + 2 per evitar que estigui a la primera fila
@@ -83,6 +81,12 @@
     ((= c 2) (list 1 2 3))
     (t (list 1 2 3 4))
     )
+)
+
+;;afagar una opcio
+(defun agafa-opcio (l n)
+    (cond ((= n 0) (car l)) 
+    (t (agafa-opcio (cdr l) (- n 1))))
 )
 
 ;; torna t si les caselles adjacent no son 'cami a no ser la actual
