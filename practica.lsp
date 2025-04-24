@@ -36,7 +36,12 @@
 (defun crea-cami (l f c)
     ;; es tria aleatòriament una casella adjacent a l'actual
     (setq rs (make-random-state t))
-    (setq eleccio (agafa-opcio (opcions l f c) (random (llarg (opcions l f c)) rs)))
+    (setq opcionsvalides (opcions l f c))
+    (print opcionsvalides)
+    (print l)
+    (cond ((/= 0 (llarg opcionsvalides)) (setq eleccio (agafa-opcio opcionsvalides (random (llarg opcionsvalides) rs))))
+    (t (setq eleccio 0)))
+    (print eleccio)
     (cond 
     ((= eleccio 1) ;; casella adjacent inferior
     (cond ((and (eq 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c eleccio)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c))
@@ -51,10 +56,10 @@
     )
     )
     ((= eleccio 4) ;; casella adjacent anterior
-    (cond ((and (eq 'paret (get-valor l f (- c 1)) (mirar-veins l f (- c 1)) eleccio)) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)))
+    (cond ((and (eq 'paret (get-valor l f (- c 1))) (mirar-veins l f (- c 1) eleccio)) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)))
     )
     )
-    )
+    (t 'gg))
 )
 (defun opcions-sortida (l) 
     (setq rs (make-random-state t))
