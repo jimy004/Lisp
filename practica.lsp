@@ -5,9 +5,9 @@
     (setq fila (+ 2 (random n rs))) ;; + 2 per evitar que estigui a la primera fila
     (setq columna (+ 2 (random m rs)))
     ;; es comprova que no estigui a una vorera (amb els condicionals)
-    (dfs (inicialitzar-matriu n m) 
+    (escriure (dfs (inicialitzar-matriu n m) 
         (cond ((= (+ n 1) fila) (- fila 2)) ((= n fila) (- fila 1)) (t fila)) 
-        (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna)))
+        (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna))))
 )
 
 ;; crear una matriu de les dimensions n*m plena de parets
@@ -27,43 +27,82 @@
 ;; algorisme DFS per a generar laberint (sense pila)
 (defun dfs (l f c) ;; l:matriu f:fila casella inici c:columna casella inici
     ;; crear cami
-    (crea-cami (set-valor l f c 'entrada) f c)
-    ;; s'obté una casella 'cami aleatori
-
+    (setq laberint (crea-cami (set-valor l f c 'entrada) f c))
+    ;; s'obté una casella 'sortida aleatoria
+    (opcions-sortida laberint)
 )
 
 ;; crea un cami per al laberint
 (defun crea-cami (l f c)
+    (print l)
     ;; es tria aleatòriament una casella adjacent a l'actual
     (setq rs (make-random-state t))
-    (setq eleccio (+ 1 (random 4 rs)))
+    (setq eleccio (+ 1 (random (llarg (opcions l f c)) rs)))
     (cond 
-    ((= eleccio 1) ;; casella adjacent superior
-    (cond (and (= 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c)
+    ((= eleccio 1) ;; casella adjacent inferior
+    (cond ((and (eq 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c eleccio)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c))
     )
     )
-    ((= eleccio 2) ;; casella adjacent inferior
-    (cond (and (= 'paret (get-valor l (- f 1) c)) (mirar-veins l (- f 1) c)) (crea-cami (set-valor l (- f 1) c 'cami) (- f 1) c)
+    ((= eleccio 2) ;; casella adjacent superior
+    (cond ((and (eq 'paret (get-valor l (- f 1) c)) (mirar-veins l (- f 1) c eleccio)) (crea-cami (set-valor l (- f 1) c 'cami) (- f 1) c))
     )
     )
     ((= eleccio 3) ;; casella adjacent posterior
-    (cond (and (= 'paret (get-valor l f (+ c 1))) (mirar-veins l f (+ c 1))) (crea-cami (set-valor l f (+ c 1) 'cami) f (+ c 1))
+    (cond ((and (eq 'paret (get-valor l f (+ c 1))) (mirar-veins l f (+ c 1) eleccio)) (crea-cami (set-valor l f (+ c 1) 'cami) f (+ c 1)))
     )
     )
     ((= eleccio 4) ;; casella adjacent anterior
-    (cond (and (= 'paret (get-valor l f (- c 1)) (mirar-veins l f (- c 1))) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)))
+    (cond ((and (eq 'paret (get-valor l f (- c 1)) (mirar-veins l f (- c 1)) eleccio)) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)))
     )
     )
     )
-
-
 )
 
-;; torna t si les caselles adjacent no son 'cami
-(defun mirar-veins (l f c)
-    (cond ((= (or 'paret 'entrada 'sortida) (get-valor l (+ f 1) c) (get-valor l (- f 1) c) (get-valor l f (+ c 1)) (get-valor l f (- c 1))) t) //!! CAMBIAR OR 
-    (t nil))
+(defun opcions-sortida (l) 
+    (setq rs (make-random-state t))
+    (setq fila (+ 2 (random (llarg l) rs))) ;; + 2 per evitar que estigui a la primera fila
+    (setq columna (+ 2 (random (llarg (car l)) rs))) ;; ... a la primera columna
+
+    (cond ((eq 'cami (get-valor l fila columna)) (set-valor l fila columna 'sortida))
+    (t (opcions-sortida l)))
 )
+
+
+;;mirar posibilitats per no sortir del mapa
+(defun opcions (l f c)
+    (setq limithoritzontal (llarg (car l)))
+    (setq limitvertical (llarg l))
+    
+    (cond ((and (= f 2) (= c 2)) (list 1 3))
+    ((and (= f 2) (= c (- limithoritzontal 1))) (list 1 4))
+    ((= f 2) (list 1 3 4)) 
+    ((and (= f (- limitvertical 1)) (= c 2)) (list 2 3))
+    ((and (= f (- limitvertical 1)) (= c (- limithoritzontal 1))) (list 2 4))
+    ((= f (- limitvertical 1)) (list 2 3 4))
+    ((= c (- limithoritzontal 1)) (list  1 2 4))
+    ((= c 2) (list 1 2 3))
+    (t (list 1 2 3 4))
+    )
+)
+
+;; torna t si les caselles adjacent no son 'cami a no ser la actual
+(defun mirar-veins (l f c e)
+    (cond ((= e 1) (cond ((and (diferents (get-valor l (- f 1) c)) (diferents (get-valor l f (+ c 1))) (diferents (get-valor l f (- c 1)))) nil) 
+    (t t)))
+    ((= e 2) (cond ((and (diferents (get-valor l (+ f 1) c)) (diferents (get-valor l f (+ c 1))) (diferents (get-valor l f (- c 1)))) nil) 
+    (t t)))
+    ((= e 3) (cond ((and (diferents (get-valor l (+ f 1) c))  (diferents (get-valor l (- f 1) c)) (diferents (get-valor l f (+ c 1)))) nil) 
+    (t t)))
+    ((= e 4) (cond ((and (diferents (get-valor l (+ f 1) c))  (diferents (get-valor l (- f 1) c)) (diferents (get-valor l f (- c 1)))) nil) 
+    (t t)))
+    )
+)
+
+;; torna t si son diferents de paret o entrada (si son cami)
+(defun diferents (a)
+    (cond ((eq 'entrada a) nil)
+    ((eq 'paret a) nil)
+    (t t)))
 
 ;; tornar l'enesim valor d'una llista de dos dimensions
 (defun get-valor (l f c)
@@ -80,11 +119,19 @@
 )
 
 ;; funció auxiliar que modifica la posicio c d'una llista l amb el valor x
-( defun set-valor-fila (l c x)
+(defun set-valor-fila (l c x)
     (cond ((= c 1) (cons x (cdr l)))
     (t (cons (car l) (set-valor-fila (cdr l) (- c 1) x)))
     )
 )
+
+;;calcula la llargaria de una llista
+(defun llarg (l)
+    (cond ((null l) 0)
+    (t (+ 1 (llarg (cdr l))))))
+
+;;escriure el fitxer de text
+(defun escriure (l))
 
 ;; FUNCIÓ EXPLORACIÓ INTERACTIVA DE LABERINTS
 (defun explora (nom))
