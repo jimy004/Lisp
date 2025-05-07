@@ -5,9 +5,15 @@
     (setq fila (+ 2 (random n rs))) ;; + 2 per evitar que estigui a la primera fila
     (setq columna (+ 2 (random m rs)))
     ;; es comprova que no estigui a una vorera (amb els condicionals)
-    (dfs (inicialitzar-matriu n m) 
-        (cond ((= (+ n 1) fila) (- fila 2)) ((= n fila) (- fila 1)) (t fila)) 
-        (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna)))
+    (setq laberint (dfs (inicialitzar-matriu n m) (cond ((= (+ n 1) fila) (- fila 2)) ((= n fila) (- fila 1)) (t fila)) (cond ((= (+ m 1) columna) (- columna 2)) ((= m columna) (- columna 1)) (t columna))))
+    (print laberint)
+    (putprop 'caracters #\# 'paret)
+    (putprop 'caracters #\. 'cami)
+    (putprop 'caracters #\e 'entrada)
+    (putprop 'caracters #\s 'sortida)
+
+    (escriure (tradueix laberint) nom)
+    
 )
 
 ;; crear una matriu de les dimensions n*m plena de parets
@@ -37,17 +43,19 @@
     ;; es tria aleatòriament una casella adjacent a l'actual
     (setq rs (make-random-state t))
     (setq opcionsvalides (opcions l f c))
-    (print opcionsvalides)
-    (print l)
     (cond ((/= 0 (llarg opcionsvalides)) (setq eleccio (agafa-opcio opcionsvalides (random (llarg opcionsvalides) rs))))
     (t (setq eleccio 0)))
-    (print eleccio)
-    (cond
+    (cond ;; es posa 'cami a:
     ((and (= eleccio 1) (eq 'paret (get-valor l (+ f 1) c)) (mirar-veins l (+ f 1) c eleccio)) (crea-cami (set-valor l (+ f 1) c 'cami) (+ f 1) c));; casella adjacent inferior
     ((and (= eleccio 2) (eq 'paret (get-valor l (- f 1) c)) (mirar-veins l (- f 1) c eleccio)) (crea-cami (set-valor l (- f 1) c 'cami) (- f 1) c));; casella adjacent superior
     ((and (= eleccio 3) (eq 'paret (get-valor l f (+ c 1))) (mirar-veins l f (+ c 1) eleccio)) (crea-cami (set-valor l f (+ c 1) 'cami) f (+ c 1)));; casella adjacent posterior
     ((and (= eleccio 4) (eq 'paret (get-valor l f (- c 1))) (mirar-veins l f (- c 1) eleccio)) (crea-cami (set-valor l f (- c 1) 'cami) f (- c 1)));; casella adjacent anterior
     (t l))
+)
+
+(defun tradueix (l)
+    (cond ((eq (car l) nil) nil)
+    (t (cons (tradueix-llista (car l)) (tradueix (cdr l)))))
 )
 
 (defun opcions-sortida (l) 
@@ -123,13 +131,40 @@
     )
 )
 
+;; tradueix una llista als possibles caracters
+(defun tradueix-llista (l)
+    (cond ((eq (cdr l) nil) (list (get 'caracters (car l)) #\newline))
+    (t (cons (get 'caracters (car l)) (tradueix-llista (cdr l))))))
+
 ;;calcula la llargaria de una llista
 (defun llarg (l)
     (cond ((null l) 0)
     (t (+ 1 (llarg (cdr l))))))
 
+(defun escriure (l nom)
+    (cond ((eq (car l) nil) nil)
+    (t (afegeix nom (car l)) (escriure (cdr l) nom))
+    )
+    
+)
+
+(defun afegeix (nom contingut)
+    (let ((fp (open nom :direction :output
+                        :if-exists :append 
+                        :if-does-not-exist :create)))
+        (escriu-intern fp contingut)
+        (close fp)))
+
 ;;escriure el fitxer de text
-(defun escriure (l))
+(defun escriu (nom contingut)
+    (let ((fp (open nom :direction :output)))
+        (escriu-intern fp contingut)
+        (close fp)))
+
+(defun escriu-intern (fp contingut)
+    (cond ((null contingut) nil)
+        (t (write-char (car contingut) fp)
+            (escriu-intern fp (cdr contingut)))))
 
 ;; FUNCIÓ EXPLORACIÓ INTERACTIVA DE LABERINTS
 (defun explora (nom))
