@@ -180,4 +180,75 @@
 
 
 ;; FUNCIÓ EXPLORACIÓ INTERACTIVA DE LABERINTS
-(defun explora (nom))
+(defun explora (nom)
+    (setq fitxer (llegeix nom))
+    (setq pinici (cercar fitxer 1 1 'entrada)) ;;troba la posicio inicial
+    (setq llargfila (- (cadr (cercar fitxer 1 1 'llarg)) 1))
+    (putprop 'colors '(0 0 0) #\#)
+    (putprop 'colors '(255 0 0) #\.)
+    (putprop 'colors '(0 255 0) #\e)
+    (putprop 'colors '(0 0 255) #\s)
+
+    (setq m (dividir 320 llargfila))
+    (setq n (dividir 375 llargfila)) ;;matrius m*m
+    ;;(cercar fitxer 1 1 'sortida) ;;troba la meta
+    (passa fitxer pinici)
+)
+
+(defun passa (l p)
+    (cls)
+    (move 0 (- 374 n))
+    (pinta l p)
+)
+
+(defun pinta (l p)
+    (cond ((null l) nil)
+    ((compara p '(0 0)) (color 0 255 255) (moverel 3 3) (quadrat (- m 6)) (moverel -3 -3) (pinta l '(-1 -1)))
+    ((eq (car l)  #\newline) (moverel (- (* m llargfila)) (-(dividir 374 llargfila))) (pinta (cdr l) (list (- (car p) 1) llargfila)))
+    (t (apply 'color (get 'colors (car l))) (quadrat (- m 1)) (moverel m 0) (pinta (cdr l) (list (car p) (- (cadr p) 1)))))
+    )
+
+(defun compara (p1 p2)
+    (cond ((and (eq (car p1) (car p2)) (eq (cadr p1) (cadr p2))) t)
+    (t nil))
+)
+
+(defun quadrat (m)
+    (drawrel m 0)
+    (drawrel 0 n)
+    (drawrel (- m) 0)
+    (drawrel 0 (- n)))
+
+
+(defun cercar (l f c n)
+    (cond ((eq n 'entrada)
+        (cond ((eq (car l) #\e) (list f c))
+            ((eq (car l) #\newline) (cercar (cdr l) (+ f 1) 0 'entrada))
+            (t (cercar (cdr l) f (+ c 1) 'entrada)))
+    )
+        ((eq n 'sortida)
+        (cond ((eq (car l) #\s) (list f c))
+            ((eq (car l) #\newline) (cercar (cdr l) (+ f 1) 0 'sortida))
+            (t (cercar (cdr l) f (+ c 1) 'sortida)))
+    )
+        ((eq n 'llarg)
+        (cond ((eq (car l) #\newline) (list f c))
+        (t (cercar (cdr l) f (+ c 1) 'llarg)))
+    )
+    )
+)
+
+(defun dividir (m n)
+    (cond ((< m n) 0)
+    (t (+ 1 (dividir (- m n) n)))))
+
+(defun llegeix (nom)
+    (let* ((fp (open nom))
+        (contingut (llegeix-intern fp)))
+        (close fp)
+        contingut))
+
+(defun llegeix-intern (fp)
+    (let ((c (read-char fp nil nil)))
+        (cond ((null c) '())
+            (t (cons c (llegeix-intern fp))))))
