@@ -183,29 +183,40 @@
 (defun explora (nom)
     (setq fitxer (llegeix nom))
     (setq pinici (cercar fitxer 1 1 'entrada)) ;;troba la posicio inicial
+    (setq pfinal (cercar fitxer 1 1 'sortida)) ;;troba la meta
     (setq llargfila (- (cadr (cercar fitxer 1 1 'llarg)) 1))
     (putprop 'colors '(0 0 0) #\#)
-    (putprop 'colors '(255 0 0) #\.)
+    (putprop 'colors '(255 255 255) #\.)
     (putprop 'colors '(0 255 0) #\e)
     (putprop 'colors '(0 0 255) #\s)
 
-    (setq m (dividir 320 llargfila))
-    (setq n (dividir 375 llargfila)) ;;matrius m*m
-    ;;(cercar fitxer 1 1 'sortida) ;;troba la meta
+    (setq m (dividir 374 llargfila))
+    (setq n (dividir 374 llargfila)) ;;matrius m*m
+    
     (passa fitxer pinici)
 )
 
 (defun passa (l p)
     (cls)
     (move 0 (- 374 n))
-    (pinta l p)
+    (pinta l p (- llargfila (cadr p)))
+    ;;(cond ((compara p pfinal) l))
+    (setq k (get-key))
+    (cond ((and (or (equal k 65) (equal k 97) (equal k 331)) (no-paret)) (passa l (list (car p) (- (cadr p) 1))))
+    ((and (or (equal k 68) (equal k 100) (equal k 333)) (no-paret)) (passa l (list (car p) (+ (cadr p) 1))))
+    ((and (or (equal k 87) (equal k 119) (equal k 328)) (no-paret)) (passa l (list (- (car p) 1) (cadr p) )))
+    ((and (or (equal k 83) (equal k 115) (equal k 336)) (no-paret)) (passa l (list (+ (car p) 1) (cadr p) )))
+    ((equal k 27) l)
+    (t (passa l p))
+    )
 )
 
-(defun pinta (l p)
+(defun pinta (l p x)
     (cond ((null l) nil)
-    ((compara p '(0 0)) (color 0 255 255) (moverel 3 3) (quadrat (- m 6)) (moverel -3 -3) (pinta l '(-1 -1)))
-    ((eq (car l)  #\newline) (moverel (- (* m llargfila)) (-(dividir 374 llargfila))) (pinta (cdr l) (list (- (car p) 1) llargfila)))
-    (t (apply 'color (get 'colors (car l))) (quadrat (- m 1)) (moverel m 0) (pinta (cdr l) (list (car p) (- (cadr p) 1)))))
+    ((compara p '(0 0)) (color 255 0 0) (moverel (- (* x m)) n) (moure-rel) (moverel (* x m) (- n)) (pinta l '(-1 -1) x))
+    ((eq (car l)  #\newline) (moverel (- (* m llargfila)) (-(dividir 374 llargfila))) (pinta (cdr l) (list (- (car p) 1) llargfila) x))
+    ((eq (car l) #\#) (apply 'color (get 'colors (car l))) (linees) (quadrat (- m 1)) (moverel m 0) (pinta (cdr l) (list (car p) (- (cadr p) 1)) x))
+    (t (apply 'color (get 'colors (car l))) (quadrat (- m 1)) (moverel m 0) (pinta (cdr l) (list (car p) (- (cadr p) 1)) x)))
     )
 
 (defun compara (p1 p2)
@@ -213,12 +224,60 @@
     (t nil))
 )
 
+(defun no-paret ()
+    (cond (t t))
+)
+
+(defun moure-rel ()
+    (cond ((> llargfila 20)
+    (moverel (dividir m 4) (dividir m 4)) (quadrat (- m 6)) (moverel (- (dividir m 4)) (- (dividir m 4))))
+    (t (moverel (dividir m 10) (dividir m 10)) (quadrat (- m 6)) (moverel (- (dividir m 10)) (- (dividir m 10)))))
+)
+
+(defun linees ()
+    (drawrel m n)
+    (moverel 0 (- n))
+
+    (drawrel (- m) n)
+    (moverel 0 (- n))
+
+    (moverel (dividir m 2) 0)
+    (drawrel 0 n)
+    (moverel (- (dividir m 2)) (- n))
+
+    (moverel 0 (dividir n 2))
+    (drawrel m 0)
+    (moverel (- m) (- (dividir n 2)))
+
+)
+
 (defun quadrat (m)
     (drawrel m 0)
-    (drawrel 0 n)
+    (drawrel 0 m)
     (drawrel (- m) 0)
-    (drawrel 0 (- n)))
+    (drawrel 0 (- m)))
 
+(defun cercle (x y radi segments)
+    (mover (+ x radi) y)
+    (cercle2 x y radi (/ 360 segments) 0))
+
+(defun cercle2 (x y radi pas angle)
+    (cond ((< angle 360)
+        (drawr (+ x (* radi (cos (radians (+ angle pas)))))
+                (+ y (* radi (sin (radians (+ angle pas))))))
+        (cercle2 x y radi pas (+ angle pas)))
+        (t t)))
+
+(defun radians (graus)
+    (/ (* graus (* 2 pi)) 360))
+
+(defun mover (x y)
+    (move (round x) 
+        (round y)))
+
+(defun drawr (x y)
+    (draw (round x) 
+        (round y)))
 
 (defun cercar (l f c n)
     (cond ((eq n 'entrada)
