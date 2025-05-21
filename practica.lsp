@@ -200,15 +200,19 @@
     (cls)
     (move 0 (- 374 n))
     (pinta l p (- llargfila (cadr p)))
-    ;;(cond ((compara p pfinal) l))
+    (print p)
+    (print pfinal)
     (setq k (get-key))
-    (cond ((and (or (equal k 65) (equal k 97) (equal k 331)) (no-paret)) (passa l (list (car p) (- (cadr p) 1))))
-    ((and (or (equal k 68) (equal k 100) (equal k 333)) (no-paret)) (passa l (list (car p) (+ (cadr p) 1))))
-    ((and (or (equal k 87) (equal k 119) (equal k 328)) (no-paret)) (passa l (list (- (car p) 1) (cadr p) )))
-    ((and (or (equal k 83) (equal k 115) (equal k 336)) (no-paret)) (passa l (list (+ (car p) 1) (cadr p) )))
+
+    (cond ((compara p pfinal) l)
+    (t (cond 
+    ((and (or (equal k 65) (equal k 97) (equal k 331)) (no-paret l (list (- (car p) 1) (- (cadr p) 1)))) (passa l (list (car p) (- (cadr p) 1))))
+    ((and (or (equal k 68) (equal k 100) (equal k 333)) (no-paret  l (list (- (car p) 1) (+ (cadr p) 1)))) (passa l (list (car p) (+ (cadr p) 1))))
+    ((and (or (equal k 87) (equal k 119) (equal k 328)) (no-paret l (list (- (car p) 2) (cadr p) ))) (passa l (list (- (car p) 1) (cadr p) )))
+    ((and (or (equal k 83) (equal k 115) (equal k 336)) (no-paret l (list (+ (car p) 0) (cadr p) ))) (passa l (list (+ (car p) 1) (cadr p) )))
     ((equal k 27) l)
     (t (passa l p))
-    )
+    )))
 )
 
 (defun pinta (l p x)
@@ -224,9 +228,23 @@
     (t nil))
 )
 
-(defun no-paret ()
-    (cond (t t))
+(defun no-paret (l p)
+    (cond ((null l) nil)
+    ((= (car p) 0)
+        (cond ((= (cadr p) 0) (not (eq (car l) #\#))) 
+        (t (no-paret (cdr l) (list 0 (- (cadr p) 1))))))
+    ((eq (car l) #\newline)
+        (no-paret (cdr l) (list (- (car p) 1) (cadr p))))
+    (t (no-paret (cdr l) (list (car p) (cadr p)))))
 )
+
+
+(defun obtenir-caracter (l p)
+    (obtenir-caracter-rec l (+ (* (car p) llargfila) (cadr p))))
+
+(defun obtenir-caracter-rec (l n)
+    (cond ((= n 0) (car l))
+        (t (obtenir-caracter-rec (cdr l) (- n 1)))))
 
 (defun moure-rel ()
     (cond ((> llargfila 20)
@@ -256,28 +274,6 @@
     (drawrel 0 m)
     (drawrel (- m) 0)
     (drawrel 0 (- m)))
-
-(defun cercle (x y radi segments)
-    (mover (+ x radi) y)
-    (cercle2 x y radi (/ 360 segments) 0))
-
-(defun cercle2 (x y radi pas angle)
-    (cond ((< angle 360)
-        (drawr (+ x (* radi (cos (radians (+ angle pas)))))
-                (+ y (* radi (sin (radians (+ angle pas))))))
-        (cercle2 x y radi pas (+ angle pas)))
-        (t t)))
-
-(defun radians (graus)
-    (/ (* graus (* 2 pi)) 360))
-
-(defun mover (x y)
-    (move (round x) 
-        (round y)))
-
-(defun drawr (x y)
-    (draw (round x) 
-        (round y)))
 
 (defun cercar (l f c n)
     (cond ((eq n 'entrada)
