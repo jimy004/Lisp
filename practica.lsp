@@ -172,6 +172,10 @@
         (escriu-intern fp contingut)
         (close fp)))
 
+(defun escriu (nom contingut)
+    (let ((fp (open nom :direction :output)))
+        (escriu-intern fp contingut)
+        (close fp)))
 
 (defun escriu-intern (fp contingut)
     (cond ((null contingut) nil)
@@ -180,7 +184,7 @@
 
 
 ;; FUNCIÓ EXPLORACIÓ INTERACTIVA DE LABERINTS
-(defun explora (nom)
+(defun explora (nom cnom)
     (setq fitxer (llegeix nom))
     (setq pinici (cercar fitxer 1 1 'entrada)) ;;troba la posicio inicial
     (setq pfinal (cercar fitxer 1 1 'sortida)) ;;troba la meta
@@ -193,25 +197,65 @@
     (setq m (dividir 374 llargfila))
     (setq n (dividir 374 llargfila)) ;;matrius m*m
     
-    (passa fitxer pinici)
+    (setq puntuacio (passa fitxer pinici 0))
+    (setq valors (list jugador puntuacio))
+    (princ nom)
+    (goto-xy 0 5)
+    (print "#######################################")
+    (cond ((open cnom  :direction :probe)  (setq classificacio (actualitzar (llegeix-exp cnom) valors)) (escriu-exp cnom classificacio) (imprimeix (llegeix-exp cnom) 1 6))
+    (t (escriu-exp cnom (list valors)) (imprimeix (llegeix-exp cnom) 1 6)))
 )
 
-(defun passa (l p)
+(defun actualitzar (l v)
+    (ordenar (inserir v l))
+)
+
+(defun inserir (v l)
+    (cond
+        ((null l) (list v))
+        ((< (cadr v) (cadr (car l))) (cons v l))
+        (t (cons (car l) (inserir v (cdr l))))
+    )
+)
+
+(defun ordenar (l)
+    (agafa-primers-10 (inserir-ordenat l) 10)
+)
+
+(defun inserir-ordenat (l)
+    (cond
+    ((null l) nil)
+    (t (inserir (car l) (inserir-ordenat (cdr l))))
+    )
+)
+
+(defun agafa-primers-10 (l x)
+    (cond
+    ((or (null l) (= x 0)) nil)
+    (t (cons (car l) (agafa-primers-10 (cdr l) (- x 1))))
+    )
+)
+
+(defun imprimeix (l p y)
+    (cond ((null l) nil)
+    (t (princ p) (princ '.) (goto-xy 5 y) (princ 'Jugador=) (princ (car (car l))) (goto-xy 25 y) (princ 'Passes=)(print (cadr (car l))) (imprimeix (cdr l) (+ p 1) (+ y 1))))
+)
+
+(defun passa (l p m)
     (cls)
     (move 0 (- 374 n))
     (pinta l p (- llargfila (cadr p)))
     (print p)
     (print pfinal)
     (setq k (get-key))
-
-    (cond ((compara p pfinal) l)
+    (cond ((compara p pfinal) (text m) m)
     (t (cond 
-    ((and (or (equal k 65) (equal k 97) (equal k 331)) (no-paret l (list (- (car p) 1) (- (cadr p) 1)))) (passa l (list (car p) (- (cadr p) 1))))
-    ((and (or (equal k 68) (equal k 100) (equal k 333)) (no-paret  l (list (- (car p) 1) (+ (cadr p) 1)))) (passa l (list (car p) (+ (cadr p) 1))))
-    ((and (or (equal k 87) (equal k 119) (equal k 328)) (no-paret l (list (- (car p) 2) (cadr p) ))) (passa l (list (- (car p) 1) (cadr p) )))
-    ((and (or (equal k 83) (equal k 115) (equal k 336)) (no-paret l (list (+ (car p) 0) (cadr p) ))) (passa l (list (+ (car p) 1) (cadr p) )))
+    ((and (or (equal k 65) (equal k 97) (equal k 331)) (no-paret l (list (- (car p) 1) (- (cadr p) 1)))) (passa l (list (car p) (- (cadr p) 1)) (+ 1 m)))
+    ((and (or (equal k 68) (equal k 100) (equal k 333)) (no-paret  l (list (- (car p) 1) (+ (cadr p) 1)))) (passa l (list (car p) (+ (cadr p) 1)) (+ 1 m)))
+    ((and (or (equal k 87) (equal k 119) (equal k 328)) (no-paret l (list (- (car p) 2) (cadr p) ))) (passa l (list (- (car p) 1) (cadr p)) (+ 1 m)))
+    ((and (or (equal k 83) (equal k 115) (equal k 336)) (no-paret l (list (+ (car p) 0) (cadr p) ))) (passa l (list (+ (car p) 1) (cadr p)) (+ 1 m)))
     ((equal k 27) l)
-    (t (passa l p))
+    (t (passa l p m))
     )))
 )
 
@@ -237,6 +281,23 @@
         (no-paret (cdr l) (list (- (car p) 1) (cadr p))))
     (t (no-paret (cdr l) (list (car p) (cadr p)))))
 )
+
+(defun text (z)
+    (cls)
+    (print "INTRODUEIX EL TEU NOM:")
+    (setq jugador (read))
+    (goto-xy 0 1)
+    (color 0 0 0)
+    (princ jugador)
+    (princ " ,HAS GUANYAT: amb ")
+    (color 255 0 0)
+    (princ z)
+    (color 0 0 0)
+    (princ " passes")
+    (goto-xy 0 3)
+    (print "#######################################")
+    (princ "CLASSIFICACIO GLOBAL: ")
+    )
 
 
 (defun obtenir-caracter (l p)
@@ -297,7 +358,7 @@
     (cond ((< m n) 0)
     (t (+ 1 (dividir (- m n) n)))))
 
-(defun llegeix (nom)
+(defun llegeix (nom )
     (let* ((fp (open nom))
         (contingut (llegeix-intern fp)))
         (close fp)
@@ -307,3 +368,14 @@
     (let ((c (read-char fp nil nil)))
         (cond ((null c) '())
             (t (cons c (llegeix-intern fp))))))
+
+(defun llegeix-exp (nom)
+    (let* ((fp (open nom))
+    (e (read fp nil nil)))
+    (close fp)
+    e))
+
+(defun escriu-exp (nom e)
+    (let ((fp (open nom :direction :output :if-does-not-exist :create)))
+    (print e fp)
+    (close fp)))    
